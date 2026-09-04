@@ -44,10 +44,9 @@ import subprocess
 PYTHON_EXE = sys.executable
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 导入 DeepSeek 后端模块（首次导入时初始化全局浏览器会话）
+# 导入 DeepSeek 后端模块（仅在 DeepSeek 模式下导入）
 # 所有问题都在同一个 DeepSeek 聊天窗口发送，不会每次开新对话
 sys.path.insert(0, BACKEND_DIR)
-import deepseek_backend as ds_backend
 
 
 # ============================================================
@@ -59,6 +58,18 @@ CURRENT_MODEL = MODEL_NAME
 BACKEND_MODE = "deepseek"                     # 默认使用 DeepSeek 后端
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_TAGS_URL = f"{OLLAMA_BASE_URL}/api/tags"
+
+# 支持命令行参数：--mode ollama
+if "--mode" in sys.argv:
+    idx = sys.argv.index("--mode")
+    if idx + 1 < len(sys.argv):
+        mode = sys.argv[idx + 1].lower()
+        if mode in ("ollama", "deepseek"):
+            BACKEND_MODE = mode
+
+# 根据模式按需导入
+if BACKEND_MODE == "deepseek":
+    import deepseek_backend as ds_backend
 
 
 def call_ollama(prompt: str, system_prompt: str = "") -> str:
