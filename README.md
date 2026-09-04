@@ -57,39 +57,36 @@ pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
 playwright install chromium
 ```
 
-### 3. 登录 DeepSeek（首次使用）
+### 3. 登录 DeepSeek（可选）
 
-首次使用需要先让程序保存你的登录态：
+如果只用 Ollama 后端可跳过此步。使用 DeepSeek 后端需要先保存登录态：
 
-1. 在项目目录下打开命令行，运行以下命令启动 Edge 浏览器：
-
+1. 在项目目录下打开命令行，运行：
    ```bash
    "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --user-data-dir="项目完整路径\edge_profile" --no-first-run
    ```
-
-   > 将 `项目完整路径` 替换为你下载的项目文件夹路径，例如 `D:\ocsshuakedaili`
+   > 将 `项目完整路径` 替换为你的项目文件夹路径，例如 `D:\ocsshuakedaili`
 2. 浏览器打开后，访问 `https://chat.deepseek.com` 并登录你的账号
 3. 登录成功后关闭浏览器即可
 
-> 这一步只需要做一次，之后 `edge_profile` 文件夹会保存你的登录状态。
+> 只需做一次，后续 `edge_profile` 文件夹会保存登录状态。
 
 ### 4. 启动服务
 
-**方式一：双击** **`start.bat`（推荐）**
-
-**方式二：命令行运行**
-
-```bash
-python app.py
-```
-
-看到以下输出表示启动成功：
+**双击 `start.bat`**，然后按提示操作：
 
 ```
-服务器已启动: http://localhost:8080
-[worker] 启动...
-[worker] 就绪
+[1/4] 检查 Python 环境...     ✓
+[2/4] 检查依赖...             ✓
+[3/4] 选择答题后端：
+    1 - DeepSeek 网页版（推荐）
+    2 - Ollama 本地模型
+请输入数字 (1 或 2):
 ```
+
+- 选 **1** → 自动检测 DeepSeek 登录状态，未登录会引导你登录
+- 选 **2** → 自动检测 Ollama 是否运行，未运行会提示
+- 依赖缺失时会自动安装
 
 ### 5. 配置 OCS 插件
 
