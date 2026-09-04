@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Edge profile（浏览器用户数据，过大）
+edge_profile/
+
+# 调试/测试文件
+_debug_*
+_test_*
+_fix*
+_copy_*
+_replace*
+_sim_backend.py
+_prompt_test.txt
+stop
+
+# 日志和截图
+*.log
+*.png
+
+# 系统
+.DS_Store
+Thumbs.db
