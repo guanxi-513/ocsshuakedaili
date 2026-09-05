@@ -56,7 +56,7 @@ if !errorlevel! neq 0 (
         echo [!] pip 安装失败，尝试直接安装...
         "!PYTHON!" -m pip install playwright
     )
-    echo     安装浏览器内核（首次需要，稍等）...
+    echo     安装浏览器内核(首次需要，稍等)...
     "!PYTHON!" -m playwright install chromium
 ) else (
     echo     [OK] playwright 库已安装
@@ -66,9 +66,9 @@ echo.
 REM ====== 3. 选择后端 ======
 echo [3/4] 选择答题后端：
 echo.
-echo     1 - DeepSeek 网页版（需账号，免费，推荐）
-echo     2 - Ollama 本地模型（需自行部署模型）
-echo     3 - 豆包网页版（需登录豆包，免费）
+echo     1 - DeepSeek 网页版 (需账号, 免费, 推荐)
+echo     2 - Ollama 本地模型 (需自行部署)
+echo     3 - 豆包网页版 (需登录, 免费)
 echo.
 set /p BACKEND="请输入数字 (1/2/3): "
 
@@ -84,7 +84,7 @@ if "%BACKEND%"=="1" (
     if "%LOGIN_STATE%"=="need_login" (
         echo     [!] 未检测到 DeepSeek 登录信息，请按以下步骤操作：
         echo.
-        echo     步骤 1：启动 Edge 浏览器（会自动打开 DeepSeek 登录页）
+        echo     步骤 1：启动 Edge 浏览器(会自动打开 DeepSeek 登录页)
         pause
         start "" msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://chat.deepseek.com"
         echo.
@@ -149,7 +149,7 @@ if "%BACKEND%"=="1" (
     if "%LOGIN_STATE%"=="need_login" (
         echo     [!] 未检测到豆包登录信息，请按以下步骤操作：
         echo.
-        echo     步骤 1：启动 Edge 浏览器（会自动打开豆包登录页）
+        echo     步骤 1：启动 Edge 浏览器(会自动打开豆包登录页)
         pause
         start "" msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://www.doubao.com/chat"
         echo.
