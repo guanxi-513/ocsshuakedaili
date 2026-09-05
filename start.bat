@@ -45,8 +45,9 @@ echo [3/4] 选择答题后端：
 echo.
 echo     1 - DeepSeek 网页版（需账号，免费，推荐）
 echo     2 - Ollama 本地模型（需自行部署模型）
+echo     3 - 豆包网页版（需登录豆包，免费）
 echo.
-set /p BACKEND="请输入数字 (1 或 2): "
+set /p BACKEND="请输入数字 (1/2/3): "
 
 if "%BACKEND%"=="1" (
     echo.
@@ -54,23 +55,24 @@ if "%BACKEND%"=="1" (
     echo.
     echo [4/4] 检查登录状态...
     
-    REM 检查 edge_profile 目录是否存在
-    if not exist "%~dp0edge_profile\Default" (
+    REM 检查登录状态
+    python "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
+    set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
+    if "%LOGIN_STATE%"=="need_login" (
         echo     [!] 未检测到 DeepSeek 登录信息，请按以下步骤操作：
         echo.
-        echo     步骤 1：启动 Edge 浏览器（会自动打开）
+        echo     步骤 1：启动 Edge 浏览器（会自动打开 DeepSeek 登录页）
         pause
-        start "" "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --user-data-dir="%~dp0edge_profile" --no-first-run
+        start msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://chat.deepseek.com"
         echo.
-        echo     步骤 2：在打开的浏览器中访问 https://chat.deepseek.com
-        echo     步骤 3：登录你的 DeepSeek 账号
-        echo     步骤 4：登录成功后关闭浏览器，回到本窗口按任意键继续
+        echo     步骤 2：在打开的浏览器中登录你的 DeepSeek 账号
+        echo     步骤 3：登录成功后关闭浏览器，回到本窗口按任意键继续
         echo.
         pause
         echo.
         echo     ✓ 登录状态已保存
     ) else (
-        echo     ✓ 已检测到登录信息
+        echo     ✓ 已检测到 DeepSeek 登录状态
     )
     echo.
     echo ============================================
@@ -94,6 +96,16 @@ if "%BACKEND%"=="1" (
         pause
     ) else (
         echo     ✓ Ollama 正在运行
+        REM 检查是否有可用模型
+        python "%~dp0_check_ollama.py" > "%TEMP%\ocs_ollama_models.txt" 2>nul
+        set /p OLLAMA_MODELS=<"%TEMP%\ocs_ollama_models.txt"
+        if "%OLLAMA_MODELS%"=="none" (
+            echo     [!] 未检测到已下载的模型
+            echo     请先打开命令行运行: ollama pull qwen2.5:7b
+            pause
+        ) else (
+            echo     ✓ 可用模型: %OLLAMA_MODELS%
+        )
     )
     echo.
     echo ============================================
@@ -101,10 +113,42 @@ if "%BACKEND%"=="1" (
     echo ============================================
     echo.
     python "%~dp0app.py" --mode ollama
+
+) else if "%BACKEND%"=="3" (
+    echo.
+    echo     ✓ 已选择豆包网页版后端
+    echo.
+    echo [4/4] 检查登录状态...
     
+    REM 检查登录状态
+    python "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
+    set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
+    if "%LOGIN_STATE%"=="need_login" (
+        echo     [!] 未检测到豆包登录信息，请按以下步骤操作：
+        echo.
+        echo     步骤 1：启动 Edge 浏览器（会自动打开豆包登录页）
+        pause
+        start msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://www.doubao.com/chat"
+        echo.
+        echo     步骤 2：在打开的浏览器中登录你的豆包账号
+        echo     步骤 3：登录成功后关闭浏览器，回到本窗口按任意键继续
+        echo.
+        pause
+        echo.
+        echo     ✓ 登录状态已保存
+    ) else (
+        echo     ✓ 已检测到豆包登录状态
+    )
+    echo.
+    echo ============================================
+    echo  启动豆包后端...
+    echo ============================================
+    echo.
+    python "%~dp0app.py" --mode doubao
+
 ) else (
     echo.
-    echo [!] 输入无效，请输入 1 或 2
+    echo [!] 输入无效，请输入 1、2 或 3
     echo.
     pause
     exit /b 1

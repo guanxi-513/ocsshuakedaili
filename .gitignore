@@ -14,6 +14,8 @@ _copy_*
 _replace*
 _sim_backend.py
 _prompt_test.txt
+_logs_test.*
+_make_copy_*
 stop
 
 # 日志和截图

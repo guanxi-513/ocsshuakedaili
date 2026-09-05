@@ -59,17 +59,19 @@ BACKEND_MODE = "deepseek"                     # 默认使用 DeepSeek 后端
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_TAGS_URL = f"{OLLAMA_BASE_URL}/api/tags"
 
-# 支持命令行参数：--mode ollama
+# 支持命令行参数：--mode ollama / --mode doubao
 if "--mode" in sys.argv:
     idx = sys.argv.index("--mode")
     if idx + 1 < len(sys.argv):
         mode = sys.argv[idx + 1].lower()
-        if mode in ("ollama", "deepseek"):
+        if mode in ("ollama", "deepseek", "doubao"):
             BACKEND_MODE = mode
 
 # 根据模式按需导入
 if BACKEND_MODE == "deepseek":
     import deepseek_backend as ds_backend
+elif BACKEND_MODE == "doubao":
+    import doubao_backend as db_backend
 
 
 def call_ollama(prompt: str, system_prompt: str = "") -> str:
@@ -146,7 +148,7 @@ def build_system_prompt(qtype: str) -> str:
     """构建系统提示词"""
     prompts = {
         "single": "你是一个答题助手。请直接回答单选题的答案，只输出答案内容，不要解释。",
-        "multiple": "你是一个答题助手。请回答多选题的所有正确答案，用 # 分隔多个答案，不要解释。",
+        "multiple": "你是一个答题助手。请回答多选题的所有正确答案，用 === 分隔多个答案，例如 A===C，只输出答案字母，不要解释。",
         "judgement": "你是一个答题助手。请回答判断题，输出 '正确' 或 '错误'，不要解释。",
         "completion": "你是一个答题助手。请回答填空题，直接输出答案，不要解释。",
     }
@@ -172,6 +174,11 @@ def call_deepseek(prompt: str) -> str:
     return ds_backend.ask(prompt)
 
 
+def call_doubao(prompt: str) -> str:
+    """直接调用 doubao_backend 模块（全局会话复用）"""
+    return db_backend.ask(prompt)
+
+
 # ============================================================
 # 答案匹配逻辑
 # ============================================================
@@ -192,14 +199,26 @@ def parse_options(options: str) -> list:
 
 def _match_single(answer: str, option_list: list) -> str:
     """单个答案的匹配逻辑"""
+    answer = answer.strip()
+    # 去掉空格后比较（AI 可能在选项内容中加空格）
+    answer_no_space = answer.replace(' ', '')
+
     # 精确匹配（选项完整内容）
     for opt in option_list:
         if opt == answer:
             return opt
 
+    # 去空格后匹配
+    for opt in option_list:
+        if opt.replace(' ', '') == answer_no_space:
+            return opt
+
     # 包含匹配（AI 答案包含在选项中，或选项包含在 AI 答案中）
     for opt in option_list:
         if answer in opt or opt in answer:
+            return opt
+        # 去空格后包含匹配
+        if answer_no_space in opt.replace(' ', '') or opt.replace(' ', '') in answer_no_space:
             return opt
 
     # 字母编号匹配：如果 AI 返回了 A/B/C/D 等字母，映射到选项索引
@@ -223,28 +242,62 @@ def match_answer(ai_answer: str, option_list: list) -> str:
     """
     ai_answer = ai_answer.strip()
 
-    # 多选题：答案包含 # 分隔符
-    if "#" in ai_answer:
-        sub_answers = [a.strip() for a in ai_answer.split("#")]
-        matched = []
-        for sub in sub_answers:
-            if not sub:
-                continue
-            # 尝试匹配内容
-            found = _match_single(sub, option_list)
-            if found:
-                matched.append(found)
-            # 如果没找到匹配，可能 AI 返回了字母编号（如 "B#C#D"）
-            # 字母匹配已在 _match_single 中处理
-        if matched:
-            return "#".join(matched)
-        # 如果所有子答案都没匹配上，返回原始 AI 答案
-        return ai_answer
+    letter_map = {
+        "a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7,
+        "A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7,
+    }
 
-    # 单选题 / 判断题 / 填空题
+    # 先尝试逐行匹配（兼容 AI 直接输出字母/内容的情况）
+    lines = ai_answer.split('\n')
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        # 跳过 AI 回显的选项行（如 "A. 上海" "B. 北京"）
+        if re.match(r'^[A-Za-z]\.\s', line):
+            continue
+        # 跳过 AI 回显的"选项："行
+        if line.startswith('选项') or line.startswith('答案'):
+            continue
+        found = _match_single(line, option_list)
+        if found:
+            return found
+
+    # 从 AI 回答中提取字母答案（仅提取"干净"的字母行，排除回显的选项行）
+    # 把回显选项行去掉后再提取字母
+    clean_lines = []
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        if re.match(r'^[A-Za-z]\.\s', line):  # 跳过 "A. xxx"
+            continue
+        if line.startswith('选项') or line.startswith('答案'):
+            continue
+        clean_lines.append(line)
+
+    clean_text = ' '.join(clean_lines)
+    found_letters = []
+    for ch in clean_text:
+        if ch in letter_map:
+            idx = letter_map[ch]
+            if idx < len(option_list) and ch not in found_letters:
+                found_letters.append(ch)
+
+    # 多选题：多个字母 → === 分隔
+    if len(found_letters) >= 2:
+        matched = [option_list[letter_map[ch]] for ch in found_letters]
+        return "===".join(matched)
+
+    # 单选题：单个字母
+    if len(found_letters) == 1:
+        return option_list[letter_map[found_letters[0]]]
+
+    # 最后尝试全文本匹配
     found = _match_single(ai_answer, option_list)
     if found:
         return found
+
     return ai_answer
 
 
@@ -318,11 +371,11 @@ class AnswerHandler(BaseHTTPRequestHandler):
         if parsed.path == "/set_mode" or parsed.path == "/set_mode/":
             global BACKEND_MODE
             mode = params.get("mode", [""])[0].strip().lower()
-            if mode in ("ollama", "deepseek"):
+            if mode in ("ollama", "deepseek", "doubao"):
                 BACKEND_MODE = mode
                 self._send_json({"code": 1, "message": f"已切换到后端模式: {BACKEND_MODE}"})
             else:
-                self._send_json({"code": 0, "message": "请指定 mode 参数: ollama 或 deepseek"})
+                self._send_json({"code": 0, "message": "请指定 mode 参数: ollama、deepseek 或 doubao"})
             return
 
         # 处理 /status 路径（查看当前状态）
@@ -341,7 +394,7 @@ class AnswerHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             try:
-                with open(LOG_FILE, "r", encoding="utf-8") as f:
+                with open(LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
                     lines = f.readlines()
                 # 只显示最近 200 行
                 html_lines = "".join(
@@ -404,10 +457,12 @@ div:nth-child(odd) {{ background:#252526; }}
         log(prompt)
         log(f"{'='*40}")
 
-        # 调用后端（Ollama 或 DeepSeek）
+        # 调用后端（Ollama / DeepSeek / 豆包）
         try:
             if BACKEND_MODE == "deepseek":
                 ai_answer = call_deepseek(prompt)
+            elif BACKEND_MODE == "doubao":
+                ai_answer = call_doubao(prompt)
             else:
                 ai_answer = call_ollama(prompt, system_prompt)
             log(f"\n========== AI 原始回答 ==========")
