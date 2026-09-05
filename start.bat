@@ -16,15 +16,13 @@ set PYTHON=python
 REM 尝试 python
 python --version >nul 2>&1
 if %errorlevel% equ 0 (
-    for /f "delims=" %%i in ('python --version') do set PY_VER=%%i
-    echo     [OK] !PY_VER!
+    echo     [OK] Python 已找到
 ) else (
     REM 尝试 python3
     python3 --version >nul 2>&1
     if !errorlevel! equ 0 (
         set PYTHON=python3
-        for /f "delims=" %%i in ('python3 --version') do set PY_VER=%%i
-        echo     [OK] !PY_VER!
+        echo     [OK] Python 已找到
     ) else (
         echo     [!] 未在系统环境变量中找到 Python
         echo     请输入你的 Python 可执行文件的完整路径
@@ -40,8 +38,7 @@ if %errorlevel% equ 0 (
             pause
             exit /b 1
         )
-        for /f "delims=" %%i in ('"!PYTHON!" --version') do set PY_VER=%%i
-        echo     [OK] !PY_VER!
+        echo     [OK] Python 已找到
     )
 )
 echo.
