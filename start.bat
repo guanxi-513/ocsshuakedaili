@@ -1,4 +1,4 @@
-@echo off
+﻿﻿@echo off
 chcp 65001 >nul
 title OCS AI 答题助手 - 启动引导
 
@@ -20,7 +20,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 for /f "delims=" %%i in ('python --version') do set PY_VER=%%i
-echo     ✓ %PY_VER%
+echo     [OK] %PY_VER%
 echo.
 
 REM ====== 2. 检查依赖 ======
@@ -36,7 +36,7 @@ if %errorlevel% neq 0 (
     echo     安装浏览器内核（首次需要，稍等）...
     python -m playwright install chromium
 ) else (
-    echo     ✓ playwright 库已安装
+    echo     [OK] playwright 库已安装
 )
 echo.
 
@@ -51,10 +51,10 @@ set /p BACKEND="请输入数字 (1/2/3): "
 
 if "%BACKEND%"=="1" (
     echo.
-    echo     ✓ 已选择 DeepSeek 网页版后端
+    echo     [OK] 已选择 DeepSeek 网页版后端
     echo.
     echo [4/4] 检查登录状态...
-    
+
     REM 检查登录状态
     python "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
     set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
@@ -63,16 +63,16 @@ if "%BACKEND%"=="1" (
         echo.
         echo     步骤 1：启动 Edge 浏览器（会自动打开 DeepSeek 登录页）
         pause
-        start msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://chat.deepseek.com"
+        start "" msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://chat.deepseek.com"
         echo.
         echo     步骤 2：在打开的浏览器中登录你的 DeepSeek 账号
         echo     步骤 3：登录成功后关闭浏览器，回到本窗口按任意键继续
         echo.
         pause
         echo.
-        echo     ✓ 登录状态已保存
+        echo     [OK] 登录状态已保存
     ) else (
-        echo     ✓ 已检测到 DeepSeek 登录状态
+        echo     [OK] 已检测到 DeepSeek 登录状态
     )
     echo.
     echo ============================================
@@ -80,13 +80,13 @@ if "%BACKEND%"=="1" (
     echo ============================================
     echo.
     python "%~dp0app.py"
-    
+
 ) else if "%BACKEND%"=="2" (
     echo.
-    echo     ✓ 已选择 Ollama 本地模型后端
+    echo     [OK] 已选择 Ollama 本地模型后端
     echo.
     echo [4/4] 检查 Ollama 运行状态...
-    
+
     REM 检查 Ollama 是否在运行
     curl -s http://localhost:11434 >nul 2>&1
     if %errorlevel% neq 0 (
@@ -95,7 +95,7 @@ if "%BACKEND%"=="1" (
         echo     启动后回到本窗口按任意键继续
         pause
     ) else (
-        echo     ✓ Ollama 正在运行
+        echo     [OK] Ollama 正在运行
         REM 检查是否有可用模型
         python "%~dp0_check_ollama.py" > "%TEMP%\ocs_ollama_models.txt" 2>nul
         set /p OLLAMA_MODELS=<"%TEMP%\ocs_ollama_models.txt"
@@ -104,7 +104,7 @@ if "%BACKEND%"=="1" (
             echo     请先打开命令行运行: ollama pull qwen2.5:7b
             pause
         ) else (
-            echo     ✓ 可用模型: %OLLAMA_MODELS%
+            echo     [OK] 可用模型: %OLLAMA_MODELS%
         )
     )
     echo.
@@ -116,10 +116,10 @@ if "%BACKEND%"=="1" (
 
 ) else if "%BACKEND%"=="3" (
     echo.
-    echo     ✓ 已选择豆包网页版后端
+    echo     [OK] 已选择豆包网页版后端
     echo.
     echo [4/4] 检查登录状态...
-    
+
     REM 检查登录状态
     python "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
     set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
@@ -128,16 +128,16 @@ if "%BACKEND%"=="1" (
         echo.
         echo     步骤 1：启动 Edge 浏览器（会自动打开豆包登录页）
         pause
-        start msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://www.doubao.com/chat"
+        start "" msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://www.doubao.com/chat"
         echo.
         echo     步骤 2：在打开的浏览器中登录你的豆包账号
         echo     步骤 3：登录成功后关闭浏览器，回到本窗口按任意键继续
         echo.
         pause
         echo.
-        echo     ✓ 登录状态已保存
+        echo     [OK] 登录状态已保存
     ) else (
-        echo     ✓ 已检测到豆包登录状态
+        echo     [OK] 已检测到豆包登录状态
     )
     echo.
     echo ============================================
