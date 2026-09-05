@@ -11,36 +11,45 @@ echo.
 
 REM ====== 1. 检查 Python ======
 echo [1/4] 检查 Python 环境...
-set PYTHON=python
 
-REM 尝试 python
+REM 先尝试自动检测
+set PYTHON=python
 python --version >nul 2>&1
 if %errorlevel% equ 0 (
     echo     [OK] Python 已找到
-) else (
-    REM 尝试 python3
-    python3 --version >nul 2>&1
+    goto :PYTHON_OK
+)
+python3 --version >nul 2>&1
+if %errorlevel% equ 0 (
+    set PYTHON=python3
+    echo     [OK] Python 已找到
+    goto :PYTHON_OK
+)
+
+REM 自动检测常见路径
+set COMMON_PATHS="C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe" "C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe" "C:\Users\HP\AppData\Local\Doubao\User Data\sandbox_runtime\bases\9f6d27f23933fb44a3a1c728c88a5ce4\python\python.exe" "C:\Python313\python.exe" "C:\Python312\python.exe"
+for %%p in (%COMMON_PATHS%) do (
+    %%p --version >nul 2>&1
     if !errorlevel! equ 0 (
-        set PYTHON=python3
-        echo     [OK] Python 已找到
-    ) else (
-        echo     [X] 未在系统环境变量中找到 Python
-        echo     请输入你的 Python 可执行文件的完整路径
-        echo     例如: C:\Users\用户名\AppData\Local\Programs\Python\Python312\python.exe
-        echo.
-        set /p PYTHON_PATH="Python 路径: "
-        REM 去掉引号
-        set PYTHON=!PYTHON_PATH:"=!
-        REM 验证路径
-        "!PYTHON!" --version >nul 2>&1
-        if !errorlevel! neq 0 (
-            echo     [X] 路径无效，请检查后重新运行本脚本
-            pause
-            exit /b 1
-        )
-        echo     [OK] Python 已找到
+        set PYTHON=%%~p
+        echo     [OK] 在 %%p 找到 Python
+        goto :PYTHON_OK
     )
 )
+echo     [X] 未自动检测到 Python
+echo     请手动输入 Python 路径(例如 C:\Python313\python.exe)
+echo     或直接关闭窗口，安装 Python 后重试
+echo.
+set /p PYTHON_PATH="路径: "
+set PYTHON=!PYTHON_PATH:"=!
+"!PYTHON!" --version >nul 2>&1
+if !errorlevel! neq 0 (
+    echo     [X] 路径无效，请检查后重新运行
+    pause
+    exit /b 1
+)
+
+:PYTHON_OK
 echo.
 
 REM ====== 2. 检查依赖 ======
