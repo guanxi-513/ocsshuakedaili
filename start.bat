@@ -75,25 +75,25 @@ echo.
 
 REM ====== 2. Check Dependencies ======
 echo [2/4] Checking dependencies...
-echo [STEP 2] Running: "!PYTHON!" -c "import playwright" >>"%LOG_FILE%"
+echo [STEP 2] Check playwright via _check_deps.py >>"%LOG_FILE%"
 
-REM Run playwright check, capture output to log
-"!PYTHON!" -c "import playwright" >>"%LOG_FILE%" 2>&1
+"!PYTHON!" "%~dp0_check_deps.py" >"%TEMP%\ocs_deps_check.txt" 2>&1
 set PY_EXIT=!errorlevel!
 echo [STEP 2] Python exit code: !PY_EXIT! >>"%LOG_FILE%"
 
-if !PY_EXIT! neq 0 (
+set /p DEPS_STATE=<"%TEMP%\ocs_deps_check.txt"
+echo [STEP 2] Deps check result: "!DEPS_STATE!" >>"%LOG_FILE%"
+
+if "!DEPS_STATE!"=="missing" (
     echo     [X] playwright not found, installing...
     echo [STEP 2.1] Installing playwright... >>"%LOG_FILE%"
     "!PYTHON!" -m pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
-    set PIP_EXIT=!errorlevel!
-    echo [STEP 2.1] pip exit code: !PIP_EXIT! >>"%LOG_FILE%"
-    if !PIP_EXIT! neq 0 (
+    echo [STEP 2.1] pip exit code: !errorlevel! >>"%LOG_FILE%"
+    if !errorlevel! neq 0 (
         echo     [X] pip install failed, retrying...
         echo [STEP 2.2] pip failed, retrying... >>"%LOG_FILE%"
         "!PYTHON!" -m pip install playwright
-        set PIP_EXIT=!errorlevel!
-        echo [STEP 2.2] pip retry exit code: !PIP_EXIT! >>"%LOG_FILE%"
+        echo [STEP 2.2] pip retry exit code: !errorlevel! >>"%LOG_FILE%"
     )
     echo     Installing browser engine (first time, please wait)...
     echo [STEP 2.3] Installing chromium browser... >>"%LOG_FILE%"
