@@ -11,30 +11,53 @@ echo.
 
 REM ====== 1. 检查 Python ======
 echo [1/4] 检查 Python 环境...
+set PYTHON=python
+
+REM 尝试 python
 python --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [!] 未检测到 Python，请先安装 Python 3.10+
-    echo     下载地址: https://www.python.org/downloads/
-    echo     安装时记得勾选 "Add Python to PATH"
-    pause
-    exit /b 1
+if %errorlevel% equ 0 (
+    for /f "delims=" %%i in ('python --version') do set PY_VER=%%i
+    echo     [OK] !PY_VER!
+) else (
+    REM 尝试 python3
+    python3 --version >nul 2>&1
+    if !errorlevel! equ 0 (
+        set PYTHON=python3
+        for /f "delims=" %%i in ('python3 --version') do set PY_VER=%%i
+        echo     [OK] !PY_VER!
+    ) else (
+        echo     [!] 未在系统环境变量中找到 Python
+        echo     请输入你的 Python 可执行文件的完整路径
+        echo     例如: C:\Users\用户名\AppData\Local\Programs\Python\Python312\python.exe
+        echo.
+        set /p PYTHON_PATH="Python 路径: "
+        REM 去掉引号
+        set PYTHON=!PYTHON_PATH:"=!
+        REM 验证路径
+        "!PYTHON!" --version >nul 2>&1
+        if !errorlevel! neq 0 (
+            echo     [!] 路径无效，请检查后重新运行本脚本
+            pause
+            exit /b 1
+        )
+        for /f "delims=" %%i in ('"!PYTHON!" --version') do set PY_VER=%%i
+        echo     [OK] !PY_VER!
+    )
 )
-for /f "delims=" %%i in ('python --version') do set PY_VER=%%i
-echo     [OK] %PY_VER%
 echo.
 
 REM ====== 2. 检查依赖 ======
 echo [2/4] 检查依赖...
-python -c "import playwright" >nul 2>&1
-if %errorlevel% neq 0 (
+"!PYTHON!" -c "import playwright" >nul 2>&1
+if !errorlevel! neq 0 (
     echo [!] 缺少 playwright 库，正在安装...
-    pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
+    "!PYTHON!" -m pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
     if !errorlevel! neq 0 (
         echo [!] pip 安装失败，尝试直接安装...
-        pip install playwright
+        "!PYTHON!" -m pip install playwright
     )
     echo     安装浏览器内核（首次需要，稍等）...
-    python -m playwright install chromium
+    "!PYTHON!" -m playwright install chromium
 ) else (
     echo     [OK] playwright 库已安装
 )
@@ -56,7 +79,7 @@ if "%BACKEND%"=="1" (
     echo [4/4] 检查登录状态...
 
     REM 检查登录状态
-    python "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
+    "!PYTHON!" "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
     set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
     if "%LOGIN_STATE%"=="need_login" (
         echo     [!] 未检测到 DeepSeek 登录信息，请按以下步骤操作：
@@ -79,7 +102,7 @@ if "%BACKEND%"=="1" (
     echo  启动 DeepSeek 后端...
     echo ============================================
     echo.
-    python "%~dp0app.py"
+    "!PYTHON!" "%~dp0app.py"
 
 ) else if "%BACKEND%"=="2" (
     echo.
@@ -97,7 +120,7 @@ if "%BACKEND%"=="1" (
     ) else (
         echo     [OK] Ollama 正在运行
         REM 检查是否有可用模型
-        python "%~dp0_check_ollama.py" > "%TEMP%\ocs_ollama_models.txt" 2>nul
+        "!PYTHON!" "%~dp0_check_ollama.py" > "%TEMP%\ocs_ollama_models.txt" 2>nul
         set /p OLLAMA_MODELS=<"%TEMP%\ocs_ollama_models.txt"
         if "%OLLAMA_MODELS%"=="none" (
             echo     [!] 未检测到已下载的模型
@@ -112,7 +135,7 @@ if "%BACKEND%"=="1" (
     echo  启动 Ollama 后端...
     echo ============================================
     echo.
-    python "%~dp0app.py" --mode ollama
+    "!PYTHON!" "%~dp0app.py" --mode ollama
 
 ) else if "%BACKEND%"=="3" (
     echo.
@@ -121,7 +144,7 @@ if "%BACKEND%"=="1" (
     echo [4/4] 检查登录状态...
 
     REM 检查登录状态
-    python "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
+    "!PYTHON!" "%~dp0_check_login.py" > "%TEMP%\ocs_login_check.txt" 2>nul
     set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
     if "%LOGIN_STATE%"=="need_login" (
         echo     [!] 未检测到豆包登录信息，请按以下步骤操作：
@@ -144,7 +167,7 @@ if "%BACKEND%"=="1" (
     echo  启动豆包后端...
     echo ============================================
     echo.
-    python "%~dp0app.py" --mode doubao
+    "!PYTHON!" "%~dp0app.py" --mode doubao
 
 ) else (
     echo.
