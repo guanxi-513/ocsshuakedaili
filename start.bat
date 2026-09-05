@@ -1,4 +1,4 @@
-﻿﻿@echo off
+﻿@echo off
 chcp 65001 >nul
 title OCS AI 答题助手 - 启动引导
 
