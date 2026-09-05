@@ -1,151 +1,105 @@
 @echo off
-title OCS AI ´ðÌâÖúÊÖ - Æô¶¯Òýµ¼
+title OCS AI ç­”é¢˜åŠ©æ‰‹ - å¯åŠ¨å¼•å¯¼
 
 set LOG_FILE=%~dp0start_log.txt
 echo ============================================= >"%LOG_FILE%"
-echo   OCS Æô¶¯ÈÕÖ¾                         >>"%LOG_FILE%"
+echo   OCS å¯åŠ¨æ—¥å¿—                         >>"%LOG_FILE%"
 echo   %DATE% %TIME%                        >>"%LOG_FILE%"
 echo ============================================= >>"%LOG_FILE%"
 
 echo =============================================
-echo   OCS AI ´ðÌâÖúÊÖ - Æô¶¯Òýµ¼
+echo   OCS AI ç­”é¢˜åŠ©æ‰‹ - å¯åŠ¨å¼•å¯¼
 echo =============================================
 echo.
 
-echo [STEP 0] ½Å±¾ÒÑÆô¶¯ >>"%LOG_FILE%"
+echo [STEP 0] è„šæœ¬å·²å¯åŠ?>>"%LOG_FILE%"
 
 setlocal enabledelayedexpansion
 
-REM ====== 1. ¼ì²é Python ======
-echo [1/4] ¼ì²é Python »·¾³...
-echo [STEP 1] ¿ªÊ¼¼ì²é Python >>"%LOG_FILE%"
+REM ====== 1. æ‰‹åŠ¨è¾“å…¥ Python è·¯å¾„ ======
+echo [1/4] è®¾ç½® Python è·¯å¾„...
+echo [STEP 1] æ‰‹åŠ¨è¾“å…¥ Python è·¯å¾„ >>"%LOG_FILE%"
 set PYTHON=
-set PYTHON_FOUND=0
-
-echo   ÕýÔÚ¼ì²â³£¼û°²×°Â·¾¶...
-echo [STEP 1.1] ¼ì²é³£¼ûÂ·¾¶... >>"%LOG_FILE%"
-
-if exist "C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe" (
-    set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe
-    set PYTHON_FOUND=1
-    echo     [OK] Â·¾¶1 ÕÒµ½ Python
-    echo [OK] Â·¾¶1: C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe >>"%LOG_FILE%"
-)
-if !PYTHON_FOUND! equ 0 if exist "C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe" (
-    set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe
-    set PYTHON_FOUND=1
-    echo     [OK] Â·¾¶2 ÕÒµ½ Python
-    echo [OK] Â·¾¶2: C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe >>"%LOG_FILE%"
-)
-if !PYTHON_FOUND! equ 0 if exist "C:\Users\HP\AppData\Local\Doubao\User Data\sandbox_runtime\bases\9f6d27f23933fb44a3a1c728c88a5ce4\python\python.exe" (
-    set PYTHON=C:\Users\HP\AppData\Local\Doubao\User Data\sandbox_runtime\bases\9f6d27f23933fb44a3a1c728c88a5ce4\python\python.exe
-    set PYTHON_FOUND=1
-    echo     [OK] Â·¾¶3(¶¹°üÉ³Ïä) ÕÒµ½ Python
-    echo [OK] Â·¾¶3: ¶¹°üÉ³Ïä Python >>"%LOG_FILE%"
-)
-if !PYTHON_FOUND! equ 0 if exist "C:\Python313\python.exe" (
-    set PYTHON=C:\Python313\python.exe
-    set PYTHON_FOUND=1
-    echo     [OK] Â·¾¶4 ÕÒµ½ Python
-    echo [OK] Â·¾¶4: C:\Python313\python.exe >>"%LOG_FILE%"
-)
-if !PYTHON_FOUND! equ 0 if exist "C:\Python312\python.exe" (
-    set PYTHON=C:\Python312\python.exe
-    set PYTHON_FOUND=1
-    echo     [OK] Â·¾¶5 ÕÒµ½ Python
-    echo [OK] Â·¾¶5: C:\Python312\python.exe >>"%LOG_FILE%"
-)
-
-if !PYTHON_FOUND! equ 1 (
-    echo     [OK] Python ÒÑÕÒµ½: !PYTHON!
-    echo [OK] Python = !PYTHON! >>"%LOG_FILE%"
-    goto :PY_OK
-)
-
-REM ¶¼Ã»ÕÒµ½£¬ÈÃÓÃ»§ÊÖ¶¯ÊäÈë
-echo     [X] Î´×Ô¶¯¼ì²âµ½ Python
-echo [X] Î´×Ô¶¯¼ì²âµ½ Python >>"%LOG_FILE%"
 
 :ASK_PYTHON
 echo.
-echo     ÇëÊÖ¶¯ÊäÈë Python Â·¾¶(ÀýÈç C:\Python313\python.exe)
-echo     (Áô¿Õ»òÊäÈë 0 ÔòÍË³ö)
+echo     è¯·è¾“å…?Python è·¯å¾„(ä¾‹å¦‚ C:\Python313\python.exe)
+echo     æˆ–è¾“å…¥ç›®å½•è·¯å¾?ä¼šè‡ªåŠ¨è¡¥å…?python.exe)
+echo     (ç•™ç©ºæˆ–è¾“å…?0 åˆ™é€€å‡?
 echo.
-set /p PYTHON_PATH="Â·¾¶: "
+set /p PYTHON_PATH="è·¯å¾„: "
 echo [INPUT] PYTHON_PATH = "!PYTHON_PATH!" >>"%LOG_FILE%"
 
 if "!PYTHON_PATH!"=="" (
-    echo [X] Î´ÊäÈëÂ·¾¶£¬ÍË³ö >>"%LOG_FILE%"
+    echo [X] æœªè¾“å…¥è·¯å¾„ï¼Œé€€å‡?>>"%LOG_FILE%"
     echo.
-    echo [X] Î´ÊäÈëÂ·¾¶£¬ÍË³ö
-    pause
+    echo [X] æœªè¾“å…¥è·¯å¾„ï¼Œé€€å‡?    pause
     exit /b 1
 )
 if "!PYTHON_PATH!"=="0" (
-    echo [X] ÒÑÈ¡Ïû£¬ÍË³ö >>"%LOG_FILE%"
+    echo [X] å·²å–æ¶ˆï¼Œé€€å‡?>>"%LOG_FILE%"
     echo.
-    echo [X] ÒÑÈ¡Ïû£¬ÍË³ö
-    pause
+    echo [X] å·²å–æ¶ˆï¼Œé€€å‡?    pause
     exit /b 1
 )
 
+REM å¦‚æžœè¾“å…¥çš„æ˜¯ç›®å½•ï¼ˆæ²¡æœ?.exeï¼‰ï¼Œè‡ªåŠ¨è¡¥å…¨ python.exe
 echo !PYTHON_PATH! | findstr /i "\.exe$" >nul
 if !errorlevel! neq 0 (
     if exist "!PYTHON_PATH!\python.exe" (
         set PYTHON=!PYTHON_PATH!\python.exe
-        echo     [OK] ×Ô¶¯²¹È« python.exe
-        echo [OK] ×Ô¶¯²¹È«: !PYTHON! >>"%LOG_FILE%"
+        echo     [OK] è‡ªåŠ¨è¡¥å…¨ python.exe
+        echo [OK] è‡ªåŠ¨è¡¥å…¨: !PYTHON! >>"%LOG_FILE%"
         goto :PY_OK
     )
 )
 
-if exist "!PYTHON_PATH!" (
+REM ç›´æŽ¥æ£€æŸ¥è¾“å…¥è·¯å¾?if exist "!PYTHON_PATH!" (
     set PYTHON=!PYTHON_PATH!
-    echo     [OK] ÓÐÐ§Â·¾¶
-    echo [OK] ÊÖ¶¯ÊäÈë: !PYTHON! >>"%LOG_FILE%"
+    echo     [OK] æœ‰æ•ˆè·¯å¾„
+    echo [OK] æ‰‹åŠ¨è¾“å…¥: !PYTHON! >>"%LOG_FILE%"
     goto :PY_OK
 )
 
-echo     [X] Â·¾¶ÎÞÐ§£¬ÇëÖØÐÂÊäÈë
-echo [X] Â·¾¶ÎÞÐ§: "!PYTHON_PATH!" >>"%LOG_FILE%"
+REM è·¯å¾„æ— æ•ˆï¼Œé‡æ–°è¯¢é—?echo     [X] è·¯å¾„æ— æ•ˆï¼Œè¯·é‡æ–°è¾“å…¥
+echo [X] è·¯å¾„æ— æ•ˆ: "!PYTHON_PATH!" >>"%LOG_FILE%"
 goto :ASK_PYTHON
 
 :PY_OK
-echo [STEP 1.3] Python È·ÈÏ: !PYTHON! >>"%LOG_FILE%"
+echo [STEP 1.3] Python ç¡®è®¤: !PYTHON! >>"%LOG_FILE%"
 echo.
 
-REM ====== 2. ¼ì²éÒÀÀµ ======
-echo [2/4] ¼ì²éÒÀÀµ...
-echo [STEP 2] ¼ì²éÒÀÀµ >>"%LOG_FILE%"
+REM ====== 2. æ£€æŸ¥ä¾èµ?======
+echo [2/4] æ£€æŸ¥ä¾èµ?..
+echo [STEP 2] æ£€æŸ¥ä¾èµ?>>"%LOG_FILE%"
 
 "!PYTHON!" -c "import playwright" >nul 2>&1
 if !errorlevel! neq 0 (
-    echo     [X] È±ÉÙ playwright ¿â£¬ÕýÔÚ°²×°...
-    echo [STEP 2.1] °²×° playwright... >>"%LOG_FILE%"
+    echo     [X] ç¼ºå°‘ playwright åº“ï¼Œæ­£åœ¨å®‰è£…...
+    echo [STEP 2.1] å®‰è£… playwright... >>"%LOG_FILE%"
     "!PYTHON!" -m pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
     if !errorlevel! neq 0 (
-        echo     [X] pip °²×°Ê§°Ü£¬³¢ÊÔÖ±½Ó°²×°...
-        echo [STEP 2.2] pip Ê§°Ü£¬ÖØÊÔ... >>"%LOG_FILE%"
+        echo     [X] pip å®‰è£…å¤±è´¥ï¼Œå°è¯•ç›´æŽ¥å®‰è£?..
+        echo [STEP 2.2] pip å¤±è´¥ï¼Œé‡è¯?.. >>"%LOG_FILE%"
         "!PYTHON!" -m pip install playwright
     )
-    echo     °²×°ä¯ÀÀÆ÷ÄÚºË(Ê×´ÎÐèÒª£¬ÉÔµÈ)...
-    echo [STEP 2.3] °²×° chromium ä¯ÀÀÆ÷ÄÚºË... >>"%LOG_FILE%"
+    echo     å®‰è£…æµè§ˆå™¨å†…æ ?é¦–æ¬¡éœ€è¦ï¼Œç¨ç­‰)...
+    echo [STEP 2.3] å®‰è£… chromium æµè§ˆå™¨å†…æ ?.. >>"%LOG_FILE%"
     "!PYTHON!" -m playwright install chromium
 ) else (
-    echo     [OK] playwright ¿âÒÑ°²×°
-    echo [OK] playwright ÒÑ°²×° >>"%LOG_FILE%"
+    echo     [OK] playwright åº“å·²å®‰è£…
+    echo [OK] playwright å·²å®‰è£?>>"%LOG_FILE%"
 )
 echo.
 
-REM ====== 3. Ñ¡Ôñºó¶Ë ======
-echo [3/4] Ñ¡Ôñ´ðÌâºó¶Ë£º
-echo [STEP 3] Ñ¡Ôñºó¶Ë >>"%LOG_FILE%"
+REM ====== 3. é€‰æ‹©åŽç«¯ ======
+echo [3/4] é€‰æ‹©ç­”é¢˜åŽç«¯ï¼?echo [STEP 3] é€‰æ‹©åŽç«¯ >>"%LOG_FILE%"
 echo.
-echo     1 - DeepSeek ÍøÒ³°æ (ÐèÕËºÅ, Ãâ·Ñ, ÍÆ¼ö)
-echo     2 - Ollama ±¾µØÄ£ÐÍ (Ðè×ÔÐÐ²¿Êð)
-echo     3 - ¶¹°üÍøÒ³°æ (ÐèµÇÂ¼, Ãâ·Ñ)
+echo     1 - DeepSeek ç½‘é¡µç‰?(éœ€è´¦å·, å…è´¹, æŽ¨è)
+echo     2 - Ollama æœ¬åœ°æ¨¡åž‹ (éœ€è‡ªè¡Œéƒ¨ç½²)
+echo     3 - è±†åŒ…ç½‘é¡µç‰?(éœ€ç™»å½•, å…è´¹)
 echo.
-set /p BACKEND="ÇëÊäÈëÊý×Ö (1/2/3): "
+set /p BACKEND="è¯·è¾“å…¥æ•°å­?(1/2/3): "
 echo [INPUT] BACKEND = "!BACKEND!" >>"%LOG_FILE%"
 
 if "%BACKEND%"=="1" (
@@ -158,124 +112,116 @@ if "%BACKEND%"=="3" (
     goto :BACKEND_DOUBAO
 )
 
-echo [X] ÊäÈëÎÞÐ§: "!BACKEND!" >>"%LOG_FILE%"
+echo [X] è¾“å…¥æ— æ•ˆ: "!BACKEND!" >>"%LOG_FILE%"
 echo.
-echo [X] ÊäÈëÎÞÐ§£¬ÇëÊäÈë 1¡¢2 »ò 3
+echo [X] è¾“å…¥æ— æ•ˆï¼Œè¯·è¾“å…¥ 1ã€? æˆ?3
 echo.
 pause
 exit /b 1
 
 REM ====== DeepSeek ======
 :BACKEND_DEEPSEEK
-echo [STEP 4] DeepSeek ºó¶Ë >>"%LOG_FILE%"
+echo [STEP 4] DeepSeek åŽç«¯ >>"%LOG_FILE%"
 echo.
-echo     [OK] ÒÑÑ¡Ôñ DeepSeek ÍøÒ³°æºó¶Ë
-echo.
-echo [4/4] ¼ì²éµÇÂ¼×´Ì¬...
+echo     [OK] å·²é€‰æ‹© DeepSeek ç½‘é¡µç‰ˆåŽç«?echo.
+echo [4/4] æ£€æŸ¥ç™»å½•çŠ¶æ€?..
 "!PYTHON!" "%~dp0_check_login.py" >"%TEMP%\ocs_login_check.txt" 2>nul
 set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
-echo [LOGIN] DeepSeek ×´Ì¬: "!LOGIN_STATE!" >>"%LOG_FILE%"
+echo [LOGIN] DeepSeek çŠ¶æ€? "!LOGIN_STATE!" >>"%LOG_FILE%"
 if "%LOGIN_STATE%"=="need_login" (
-    echo     [X] Î´¼ì²âµ½ DeepSeek µÇÂ¼ÐÅÏ¢
+    echo     [X] æœªæ£€æµ‹åˆ° DeepSeek ç™»å½•ä¿¡æ¯
     echo.
-    echo     ²½Öè 1£ºÆô¶¯ Edge ä¯ÀÀÆ÷(»á×Ô¶¯´ò¿ª DeepSeek µÇÂ¼Ò³)
+    echo     æ­¥éª¤ 1ï¼šå¯åŠ?Edge æµè§ˆå™?ä¼šè‡ªåŠ¨æ‰“å¼€ DeepSeek ç™»å½•é¡?
     pause
-    echo [STEP 4.1] Æô¶¯ä¯ÀÀÆ÷ >>"%LOG_FILE%"
+    echo [STEP 4.1] å¯åŠ¨æµè§ˆå™?>>"%LOG_FILE%"
     start "" msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://chat.deepseek.com"
     echo.
-    echo     ²½Öè 2£ºÔÚ´ò¿ªµÄä¯ÀÀÆ÷ÖÐµÇÂ¼ÄãµÄ DeepSeek ÕËºÅ
-    echo     ²½Öè 3£ºµÇÂ¼³É¹¦ºó¹Ø±Õä¯ÀÀÆ÷£¬»Øµ½±¾´°¿Ú°´ÈÎÒâ¼ü¼ÌÐø
-    echo.
+    echo     æ­¥éª¤ 2ï¼šåœ¨æ‰“å¼€çš„æµè§ˆå™¨ä¸­ç™»å½•ä½ çš?DeepSeek è´¦å·
+    echo     æ­¥éª¤ 3ï¼šç™»å½•æˆåŠŸåŽå…³é—­æµè§ˆå™¨ï¼Œå›žåˆ°æœ¬çª—å£æŒ‰ä»»æ„é”®ç»§ç»?    echo.
     pause
-    echo     [OK] µÇÂ¼×´Ì¬ÒÑ±£´æ
-    echo [OK] DeepSeek µÇÂ¼Íê³É >>"%LOG_FILE%"
+    echo     [OK] ç™»å½•çŠ¶æ€å·²ä¿å­˜
+    echo [OK] DeepSeek ç™»å½•å®Œæˆ >>"%LOG_FILE%"
 ) else (
-    echo     [OK] ÒÑ¼ì²âµ½ DeepSeek µÇÂ¼×´Ì¬
-)
+    echo     [OK] å·²æ£€æµ‹åˆ° DeepSeek ç™»å½•çŠ¶æ€?)
 echo.
 echo ============================================
-echo  Æô¶¯ DeepSeek ºó¶Ë...
+echo  å¯åŠ¨ DeepSeek åŽç«¯...
 echo ============================================
-echo [START] Æô¶¯ app.py (DeepSeek) >>"%LOG_FILE%"
+echo [START] å¯åŠ¨ app.py (DeepSeek) >>"%LOG_FILE%"
 echo.
 "!PYTHON!" "%~dp0app.py"
-echo [EXIT] app.py ÍË³ö >>"%LOG_FILE%"
+echo [EXIT] app.py é€€å‡?>>"%LOG_FILE%"
 pause
 exit /b 0
 
 REM ====== Ollama ======
 :BACKEND_OLLAMA
-echo [STEP 4] Ollama ºó¶Ë >>"%LOG_FILE%"
+echo [STEP 4] Ollama åŽç«¯ >>"%LOG_FILE%"
 echo.
-echo     [OK] ÒÑÑ¡Ôñ Ollama ±¾µØÄ£ÐÍºó¶Ë
+echo     [OK] å·²é€‰æ‹© Ollama æœ¬åœ°æ¨¡åž‹åŽç«¯
 echo.
-echo [4/4] ¼ì²é Ollama ÔËÐÐ×´Ì¬...
+echo [4/4] æ£€æŸ?Ollama è¿è¡ŒçŠ¶æ€?..
 curl -s http://localhost:11434 >nul 2>&1
 if %errorlevel% neq 0 (
-    echo     [X] Ollama Î´ÔËÐÐ£¬ÇëÏÈÆô¶¯ Ollama
-    echo     Èç¹ûÒÑ°²×° Ollama£¬ÔÚ¿ªÊ¼²Ëµ¥ÖÐËÑË÷ "Ollama" ²¢Æô¶¯
-    echo [X] Ollama Î´ÔËÐÐ >>"%LOG_FILE%"
+    echo     [X] Ollama æœªè¿è¡Œï¼Œè¯·å…ˆå¯åŠ¨ Ollama
+    echo     å¦‚æžœå·²å®‰è£?Ollamaï¼Œåœ¨å¼€å§‹èœå•ä¸­æœç´¢ "Ollama" å¹¶å¯åŠ?    echo [X] Ollama æœªè¿è¡?>>"%LOG_FILE%"
     pause
 ) else (
-    echo     [OK] Ollama ÕýÔÚÔËÐÐ
-    echo [OK] Ollama ÔËÐÐÖÐ >>"%LOG_FILE%"
+    echo     [OK] Ollama æ­£åœ¨è¿è¡Œ
+    echo [OK] Ollama è¿è¡Œä¸?>>"%LOG_FILE%"
     "!PYTHON!" "%~dp0_check_ollama.py" >"%TEMP%\ocs_ollama_models.txt" 2>nul
     set /p OLLAMA_MODELS=<"%TEMP%\ocs_ollama_models.txt"
     if "%OLLAMA_MODELS%"=="none" (
-        echo     [X] Î´¼ì²âµ½ÒÑÏÂÔØµÄÄ£ÐÍ
-        echo     ÇëÏÈ´ò¿ªÃüÁîÐÐÔËÐÐ: ollama pull qwen2.5:7b
-        echo [X] Ollama ÎÞÄ£ÐÍ >>"%LOG_FILE%"
+        echo     [X] æœªæ£€æµ‹åˆ°å·²ä¸‹è½½çš„æ¨¡åž‹
+        echo     è¯·å…ˆæ‰“å¼€å‘½ä»¤è¡Œè¿è¡? ollama pull qwen2.5:7b
+        echo [X] Ollama æ— æ¨¡åž?>>"%LOG_FILE%"
         pause
     ) else (
-        echo     [OK] ¿ÉÓÃÄ£ÐÍ: %OLLAMA_MODELS%
-        echo [OK] Ollama Ä£ÐÍ: %OLLAMA_MODELS% >>"%LOG_FILE%"
+        echo     [OK] å¯ç”¨æ¨¡åž‹: %OLLAMA_MODELS%
+        echo [OK] Ollama æ¨¡åž‹: %OLLAMA_MODELS% >>"%LOG_FILE%"
     )
 )
 echo.
 echo ============================================
-echo  Æô¶¯ Ollama ºó¶Ë...
+echo  å¯åŠ¨ Ollama åŽç«¯...
 echo ============================================
-echo [START] Æô¶¯ app.py (Ollama) >>"%LOG_FILE%"
+echo [START] å¯åŠ¨ app.py (Ollama) >>"%LOG_FILE%"
 echo.
 "!PYTHON!" "%~dp0app.py" --mode ollama
-echo [EXIT] app.py ÍË³ö >>"%LOG_FILE%"
+echo [EXIT] app.py é€€å‡?>>"%LOG_FILE%"
 pause
 exit /b 0
 
-REM ====== ¶¹°ü ======
+REM ====== è±†åŒ… ======
 :BACKEND_DOUBAO
-echo [STEP 4] ¶¹°üºó¶Ë >>"%LOG_FILE%"
+echo [STEP 4] è±†åŒ…åŽç«¯ >>"%LOG_FILE%"
 echo.
-echo     [OK] ÒÑÑ¡Ôñ¶¹°üÍøÒ³°æºó¶Ë
-echo.
-echo [4/4] ¼ì²éµÇÂ¼×´Ì¬...
+echo     [OK] å·²é€‰æ‹©è±†åŒ…ç½‘é¡µç‰ˆåŽç«?echo.
+echo [4/4] æ£€æŸ¥ç™»å½•çŠ¶æ€?..
 "!PYTHON!" "%~dp0_check_login.py" >"%TEMP%\ocs_login_check.txt" 2>nul
 set /p LOGIN_STATE=<"%TEMP%\ocs_login_check.txt"
-echo [LOGIN] ¶¹°ü×´Ì¬: "!LOGIN_STATE!" >>"%LOG_FILE%"
+echo [LOGIN] è±†åŒ…çŠ¶æ€? "!LOGIN_STATE!" >>"%LOG_FILE%"
 if "%LOGIN_STATE%"=="need_login" (
-    echo     [X] Î´¼ì²âµ½¶¹°üµÇÂ¼ÐÅÏ¢
+    echo     [X] æœªæ£€æµ‹åˆ°è±†åŒ…ç™»å½•ä¿¡æ¯
     echo.
-    echo     ²½Öè 1£ºÆô¶¯ Edge ä¯ÀÀÆ÷(»á×Ô¶¯´ò¿ª¶¹°üµÇÂ¼Ò³)
+    echo     æ­¥éª¤ 1ï¼šå¯åŠ?Edge æµè§ˆå™?ä¼šè‡ªåŠ¨æ‰“å¼€è±†åŒ…ç™»å½•é¡?
     pause
-    echo [STEP 4.1] Æô¶¯ä¯ÀÀÆ÷ >>"%LOG_FILE%"
+    echo [STEP 4.1] å¯åŠ¨æµè§ˆå™?>>"%LOG_FILE%"
     start "" msedge --user-data-dir="%~dp0edge_profile" --no-first-run "https://www.doubao.com/chat"
     echo.
-    echo     ²½Öè 2£ºÔÚ´ò¿ªµÄä¯ÀÀÆ÷ÖÐµÇÂ¼ÄãµÄ¶¹°üÕËºÅ
-    echo     ²½Öè 3£ºµÇÂ¼³É¹¦ºó¹Ø±Õä¯ÀÀÆ÷£¬»Øµ½±¾´°¿Ú°´ÈÎÒâ¼ü¼ÌÐø
-    echo.
+    echo     æ­¥éª¤ 2ï¼šåœ¨æ‰“å¼€çš„æµè§ˆå™¨ä¸­ç™»å½•ä½ çš„è±†åŒ…è´¦å?    echo     æ­¥éª¤ 3ï¼šç™»å½•æˆåŠŸåŽå…³é—­æµè§ˆå™¨ï¼Œå›žåˆ°æœ¬çª—å£æŒ‰ä»»æ„é”®ç»§ç»?    echo.
     pause
-    echo     [OK] µÇÂ¼×´Ì¬ÒÑ±£´æ
-    echo [OK] ¶¹°üµÇÂ¼Íê³É >>"%LOG_FILE%"
+    echo     [OK] ç™»å½•çŠ¶æ€å·²ä¿å­˜
+    echo [OK] è±†åŒ…ç™»å½•å®Œæˆ >>"%LOG_FILE%"
 ) else (
-    echo     [OK] ÒÑ¼ì²âµ½¶¹°üµÇÂ¼×´Ì¬
-)
+    echo     [OK] å·²æ£€æµ‹åˆ°è±†åŒ…ç™»å½•çŠ¶æ€?)
 echo.
 echo ============================================
-echo  Æô¶¯¶¹°üºó¶Ë...
+echo  å¯åŠ¨è±†åŒ…åŽç«¯...
 echo ============================================
-echo [START] Æô¶¯ app.py (¶¹°ü) >>"%LOG_FILE%"
+echo [START] å¯åŠ¨ app.py (è±†åŒ…) >>"%LOG_FILE%"
 echo.
 "!PYTHON!" "%~dp0app.py" --mode doubao
-echo [EXIT] app.py ÍË³ö >>"%LOG_FILE%"
+echo [EXIT] app.py é€€å‡?>>"%LOG_FILE%"
 pause
 exit /b 0
