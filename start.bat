@@ -70,29 +70,38 @@ echo [X] Invalid: "!PYTHON_PATH!" >>"%LOG_FILE%"
 goto :ASK_PYTHON
 
 :PY_OK
-echo [STEP 1.3] Python confirmed: !PYTHON! >>"%LOG_FILE%"
+echo [STEP 1] Python confirmed: !PYTHON! >>"%LOG_FILE%"
 echo.
 
 REM ====== 2. Check Dependencies ======
 echo [2/4] Checking dependencies...
-echo [STEP 2] Check dependencies >>"%LOG_FILE%"
+echo [STEP 2] Running: "!PYTHON!" -c "import playwright" >>"%LOG_FILE%"
 
-"!PYTHON!" -c "import playwright" >nul 2>&1
-if !errorlevel! neq 0 (
+REM Run playwright check, capture output to log
+"!PYTHON!" -c "import playwright" >>"%LOG_FILE%" 2>&1
+set PY_EXIT=!errorlevel!
+echo [STEP 2] Python exit code: !PY_EXIT! >>"%LOG_FILE%"
+
+if !PY_EXIT! neq 0 (
     echo     [X] playwright not found, installing...
     echo [STEP 2.1] Installing playwright... >>"%LOG_FILE%"
     "!PYTHON!" -m pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
-    if !errorlevel! neq 0 (
+    set PIP_EXIT=!errorlevel!
+    echo [STEP 2.1] pip exit code: !PIP_EXIT! >>"%LOG_FILE%"
+    if !PIP_EXIT! neq 0 (
         echo     [X] pip install failed, retrying...
         echo [STEP 2.2] pip failed, retrying... >>"%LOG_FILE%"
         "!PYTHON!" -m pip install playwright
+        set PIP_EXIT=!errorlevel!
+        echo [STEP 2.2] pip retry exit code: !PIP_EXIT! >>"%LOG_FILE%"
     )
     echo     Installing browser engine (first time, please wait)...
     echo [STEP 2.3] Installing chromium browser... >>"%LOG_FILE%"
     "!PYTHON!" -m playwright install chromium
+    echo [STEP 2.3] chromium install done >>"%LOG_FILE%"
 ) else (
     echo     [OK] playwright already installed
-    echo [OK] playwright installed >>"%LOG_FILE%"
+    echo [STEP 2] OK - playwright installed >>"%LOG_FILE%"
 )
 echo.
 
