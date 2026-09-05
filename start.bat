@@ -1,5 +1,4 @@
 @echo off
-chcp 65001 >nul
 title OCS AI 答题助手 - 启动引导
 
 set LOG_FILE=%~dp0start_log.txt
