@@ -16,10 +16,48 @@ echo [STEP 0] Script started >>"%LOG_FILE%"
 
 setlocal enabledelayedexpansion
 
-REM ====== 1. Manual Python Path Input ======
+REM ====== 1. Python Path Detection ======
 echo [1/4] Python Path Setup...
-echo [STEP 1] Manual Python path >>"%LOG_FILE%"
+echo [STEP 1] Detecting Python... >>"%LOG_FILE%"
 set PYTHON=
+
+REM Auto-detect common Python paths
+echo     Checking common paths...
+echo [STEP 1] Auto detect... >>"%LOG_FILE%"
+if exist "C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe" (
+    set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe
+    echo     [OK] Python found (Python313)
+    echo [OK] Auto: Python313 >>"%LOG_FILE%"
+    goto :PY_OK
+)
+if exist "C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe" (
+    set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe
+    echo     [OK] Python found (Python312)
+    echo [OK] Auto: Python312 >>"%LOG_FILE%"
+    goto :PY_OK
+)
+if exist "C:\Users\HP\AppData\Local\Doubao\User Data\sandbox_runtime\bases\9f6d27f23933fb44a3a1c728c88a5ce4\python\python.exe" (
+    set PYTHON=C:\Users\HP\AppData\Local\Doubao\User Data\sandbox_runtime\bases\9f6d27f23933fb44a3a1c728c88a5ce4\python\python.exe
+    echo     [OK] Python found (Doubao sandbox)
+    echo [OK] Auto: Doubao sandbox >>"%LOG_FILE%"
+    goto :PY_OK
+)
+if exist "C:\Python313\python.exe" (
+    set PYTHON=C:\Python313\python.exe
+    echo     [OK] Python found (C:\Python313)
+    echo [OK] Auto: C:\Python313 >>"%LOG_FILE%"
+    goto :PY_OK
+)
+if exist "C:\Python312\python.exe" (
+    set PYTHON=C:\Python312\python.exe
+    echo     [OK] Python found (C:\Python312)
+    echo [OK] Auto: C:\Python312 >>"%LOG_FILE%"
+    goto :PY_OK
+)
+
+REM Auto-detect failed, ask for manual input
+echo     [X] Auto detect failed, please enter path manually
+echo [STEP 1] Auto detect failed >>"%LOG_FILE%"
 
 :ASK_PYTHON
 echo.
