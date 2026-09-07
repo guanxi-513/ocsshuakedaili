@@ -121,14 +121,14 @@ echo [STEP 2] OK >>"%LOG_FILE%"
 goto :DEPS_DONE
 
 :INSTALL_DEPS
-echo     [X] playwright not found, installing...
-echo [STEP 2.1] Installing playwright... >>"%LOG_FILE%"
-"!PYTHON!" -m pip install playwright -i https://pypi.tuna.tsinghua.edu.cn/simple
+echo     [X] Missing dependencies (playwright, requests), installing...
+echo [STEP 2.1] Installing playwright+requests... >>"%LOG_FILE%"
+"!PYTHON!" -m pip install playwright requests -i https://pypi.tuna.tsinghua.edu.cn/simple
 echo [STEP 2.1] pip exit: !errorlevel! >>"%LOG_FILE%"
 if !errorlevel! neq 0 (
     echo     [X] pip install failed, retrying...
     echo [STEP 2.2] pip retry... >>"%LOG_FILE%"
-    "!PYTHON!" -m pip install playwright
+    "!PYTHON!" -m pip install playwright requests
     echo [STEP 2.2] pip retry exit: !errorlevel! >>"%LOG_FILE%"
 )
 echo     Installing browser engine (first time, please wait)...
