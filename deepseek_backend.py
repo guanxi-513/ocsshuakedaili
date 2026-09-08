@@ -8,7 +8,7 @@ import threading
 import queue
 import time
 
-EDGE_PROFILE = r'd:\appppp\ocs\edge_profile'
+EDGE_PROFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'edge_profile')
 EDGE_BINARY = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 
 _REQUEST_QUEUE = queue.Queue()
@@ -27,7 +27,7 @@ def _worker():
             context = p.chromium.launch_persistent_context(
                 user_data_dir=EDGE_PROFILE,
                 executable_path=EDGE_BINARY,
-                headless=True,
+                headless=False,
                 viewport={'width':1280,'height':800},
             )
             page = context.pages[0] if context.pages else context.new_page()
