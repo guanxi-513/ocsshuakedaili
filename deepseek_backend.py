@@ -58,12 +58,12 @@ def _worker():
 
 
 def _do_ask(page, prompt: str) -> str:
-    """刷新页面 → 发送问题 → 获取答案"""
+    """不刷新页面，直接发送问题 → 获取答案"""
     t0 = time.time()
 
-    # 刷新页面（比重新 goto 快很多）
-    page.reload(wait_until='domcontentloaded')
-    page.wait_for_timeout(1500)
+    # 确保页面在正确位置
+    page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+    page.wait_for_timeout(500)
 
     textarea = page.wait_for_selector('textarea:not([disabled])', timeout=15000)
     textarea.click()
@@ -79,20 +79,36 @@ def _do_ask(page, prompt: str) -> str:
     for i in range(90):
         page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
         page.wait_for_timeout(500)
-        replies = page.query_selector_all('.ds-assistant-message-main-content')
+        # 查找所有 AI 回复区域（包含 markdown 内容的块）
+        replies = page.query_selector_all('[class*="ds-markdown"], [class*="ds-assistant"], [class*="message-content"], .ds-assistant-message-main-content')
         if len(replies) >= 1:
             last = replies[-1]
+            # 检查是否还在加载中（光标闪烁等）
             loading = (last.query_selector('[class*="cursor"]') or
                        last.query_selector('[class*="blink"]') or
-                       last.query_selector('[class*="loading"]'))
+                       last.query_selector('[class*="loading"]') or
+                       last.query_selector('[class*="thinking"]'))
             if not loading:
-                page.wait_for_timeout(1000)
-                replies = page.query_selector_all('.ds-assistant-message-main-content')
-                if len(replies) >= 1:
-                    answer = replies[-1].inner_text().strip()
-                    if answer and len(answer) > 1:
-                        break
+                text = last.inner_text().strip()
+                if text and len(text) > 1:
+                    page.wait_for_timeout(800)
+                    answer = text
+                    break
         page.wait_for_timeout(1000)
+
+    if not answer:
+        # 最后尝试：直接取页面中最后一个可见的回复内容
+        try:
+            answer = page.evaluate('''() => {
+                const msgs = document.querySelectorAll('[class*="ds-assistant"], [class*="ds-markdown"], [class*="message-content"]');
+                for (let i = msgs.length - 1; i >= 0; i--) {
+                    const t = msgs[i].innerText.trim();
+                    if (t.length > 1) return t;
+                }
+                return '';
+            }''')
+        except Exception:
+            pass
 
     if not answer:
         raise TimeoutError('DeepSeek 回复超时')
