@@ -319,15 +319,18 @@ class AnswerHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
+            # 使用请求的 Host 头动态生成 URL，支持跨网络访问
+            host = self.headers.get('Host', 'localhost:8080')
+            base_url = f"http://{host}"
             config = [
                 {
                     "contentType": "json",
                     "handler": "return (res)=> [undefined, res[1]]",
-                    "homepage": "http://localhost:8080",
+                    "homepage": base_url,
                     "method": "get",
                     "name": "AI 自动答题",
                     "type": "GM_xmlhttpRequest",
-                    "url": "http://localhost:8080/search?title=${title}&type=${type}&options=${options}",
+                    "url": f"{base_url}/search?title=${{title}}&type=${{type}}&options=${{options}}",
                 }
             ]
             self.wfile.write(json.dumps(config, ensure_ascii=False).encode("utf-8"))
