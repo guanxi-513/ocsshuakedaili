@@ -162,10 +162,19 @@ def build_prompt(title: str, options: str, qtype: str) -> str:
         "judgement": "判断题", "completion": "填空题",
     }
     type_name = type_names.get(qtype, "题目")
+
+    # 题干
     prompt_parts = [f"【{type_name}】{title}"]
     if options:
         prompt_parts.append(f"\n选项：\n{options}")
-    prompt_parts.append("\n\n请直接给出答案，不要解释。")
+
+    # 输出约束：只输出字母，防止 AI 回显题目/选项/解释
+    if qtype == "multiple":
+        prompt_parts.append("\n\n这是多选题，请只输出所有正确选项的字母，多个字母直接连写（如 AC 或 ACD），不要输出题目、选项内容或任何解释。")
+    elif qtype == "completion":
+        prompt_parts.append("\n\n请直接给出填空答案，不要解释。")
+    else:
+        prompt_parts.append("\n\n请只输出正确选项的字母（如 A），不要重复题目、选项内容或任何解释。")
     return "".join(prompt_parts)
 
 
@@ -235,20 +244,33 @@ def _match_single(answer: str, option_list: list) -> str:
     return ""
 
 
-def match_answer(ai_answer: str, option_list: list) -> str:
+def match_answer(ai_answer: str, option_list: list, qtype: str = "single") -> str:
     """
     将 AI 返回的答案与选项列表进行匹配。
     返回匹配到的选项完整内容。
     """
     ai_answer = ai_answer.strip()
+    is_multiple = (qtype == "multiple")
 
+    lines = ai_answer.split('\n')
+
+    # 收集"带编号的答案行"（如 "C. 日莲宗"），这些是明确的答案，按编号映射
     letter_map = {
         "a": 0, "b": 1, "c": 2, "d": 3, "e": 4, "f": 5, "g": 6, "h": 7,
         "A": 0, "B": 1, "C": 2, "D": 3, "E": 4, "F": 5, "G": 6, "H": 7,
     }
+    numbered_answers = []
+    for line in lines:
+        line = line.strip()
+        m = re.match(r'^([A-Ha-h])\s*[\.、:：]\s*(.+)$', line)
+        if m:
+            letter = m.group(1)
+            content = m.group(2).strip()
+            idx = letter_map[letter]
+            if idx < len(option_list):
+                numbered_answers.append(idx)
 
-    # 先尝试逐行匹配（兼容 AI 直接输出字母/内容的情况）
-    lines = ai_answer.split('\n')
+    clean_lines = []
     for line in lines:
         line = line.strip()
         if not line:
@@ -259,23 +281,20 @@ def match_answer(ai_answer: str, option_list: list) -> str:
         # 跳过 AI 回显的"选项："行
         if line.startswith('选项') or line.startswith('答案'):
             continue
-        found = _match_single(line, option_list)
-        if found:
-            return found
-
-    # 从 AI 回答中提取字母答案（仅提取"干净"的字母行，排除回显的选项行）
-    # 把回显选项行去掉后再提取字母
-    clean_lines = []
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if re.match(r'^[A-Za-z]\.\s', line):  # 跳过 "A. xxx"
-            continue
-        if line.startswith('选项') or line.startswith('答案'):
-            continue
         clean_lines.append(line)
 
+    if not is_multiple:
+        # === 单选题 / 判断题 ===
+        # 优先使用"带编号的答案行"，取最后一个（真正的答案通常在末尾）
+        if numbered_answers:
+            return option_list[numbered_answers[-1]]
+        # 否则逐行匹配
+        for line in clean_lines:
+            found = _match_single(line, option_list)
+            if found:
+                return found
+
+    # === 多选题 / 逐行匹配未命中：提取所有字母 ===
     clean_text = ' '.join(clean_lines)
     found_letters = []
     for ch in clean_text:
@@ -284,13 +303,13 @@ def match_answer(ai_answer: str, option_list: list) -> str:
             if idx < len(option_list) and ch not in found_letters:
                 found_letters.append(ch)
 
-    # 多选题：多个字母 → === 分隔
     if len(found_letters) >= 2:
+        # 多选题：多个字母 → === 分隔
         matched = [option_list[letter_map[ch]] for ch in found_letters]
         return "===".join(matched)
 
-    # 单选题：单个字母
     if len(found_letters) == 1:
+        # 单选题：单个字母
         return option_list[letter_map[found_letters[0]]]
 
     # 最后尝试全文本匹配
@@ -474,7 +493,7 @@ div:nth-child(odd) {{ background:#252526; }}
 
             # 答案匹配
             if option_list:
-                matched = match_answer(ai_answer, option_list)
+                matched = match_answer(ai_answer, option_list, qtype)
                 log(f"\n========== 匹配后答案 ==========")
                 log(f"'{matched}'")
                 log(f"{'='*40}")

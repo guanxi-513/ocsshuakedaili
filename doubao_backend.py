@@ -8,7 +8,7 @@ import threading
 import queue
 import time
 
-EDGE_PROFILE = r'd:\appppp\ocs\edge_profile'
+EDGE_PROFILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'edge_profile')
 EDGE_BINARY = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
 DOUBAO_URL = 'https://www.doubao.com/chat'
 

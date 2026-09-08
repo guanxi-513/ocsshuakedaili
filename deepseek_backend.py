@@ -44,30 +44,9 @@ def _worker():
                 if prompt is None:
                     break
                 try:
-                    # 检查页面是否还活着
-                    try:
-                        page.title()
-                    except Exception:
-                        print("[worker] 页面已关闭，重新打开...", file=sys.stderr, flush=True)
-                        page = context.pages[0] if context.pages else context.new_page()
-                        page.goto('https://chat.deepseek.com', timeout=30000, wait_until='domcontentloaded')
-                        page.wait_for_timeout(2000)
                     answer = _do_ask(page, prompt)
                     _RESPONSE_QUEUE.put(answer)
                 except Exception as e:
-                    print(f"[worker] 请求失败: {e}", file=sys.stderr, flush=True)
-                    # 如果是页面关闭错误，尝试重新初始化
-                    try:
-                        page.close()
-                    except Exception:
-                        pass
-                    try:
-                        page = context.new_page()
-                        page.goto('https://chat.deepseek.com', timeout=30000, wait_until='domcontentloaded')
-                        page.wait_for_timeout(2000)
-                        print("[worker] 页面已恢复", file=sys.stderr, flush=True)
-                    except Exception as e2:
-                        print(f"[worker] 恢复失败: {e2}", file=sys.stderr, flush=True)
                     _RESPONSE_QUEUE.put(e)
 
             context.close()
@@ -79,62 +58,79 @@ def _worker():
 
 
 def _do_ask(page, prompt: str) -> str:
-    """不刷新页面，直接发送问题 → 获取答案"""
+    """发送问题 → 校验发送成功 → 等待回复完成 → 提取答案"""
     t0 = time.time()
 
-    # 确保页面在正确位置
-    page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-    page.wait_for_timeout(500)
+    def _send():
+        textarea = page.wait_for_selector('textarea:not([disabled])', timeout=15000)
+        textarea.click()
+        page.wait_for_timeout(300)
+        textarea.fill("")
+        page.wait_for_timeout(200)
+        textarea.fill(prompt)
+        page.wait_for_timeout(300)
+        page.keyboard.press('Enter')
 
-    textarea = page.wait_for_selector('textarea:not([disabled])', timeout=15000)
-    textarea.click()
-    textarea.fill("")
-    page.wait_for_timeout(200)
-    textarea.fill(prompt)
-    page.wait_for_timeout(300)
-    page.keyboard.press('Enter')
-
-    print(f'[{time.time()-t0:.1f}s] 已发送', file=sys.stderr, flush=True)
-
-    answer = None
-    for i in range(90):
-        page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-        page.wait_for_timeout(500)
-        # 查找所有 AI 回复区域（包含 markdown 内容的块）
-        replies = page.query_selector_all('[class*="ds-markdown"], [class*="ds-assistant"], [class*="message-content"], .ds-assistant-message-main-content')
-        if len(replies) >= 1:
-            last = replies[-1]
-            # 检查是否还在加载中（光标闪烁等）
-            loading = (last.query_selector('[class*="cursor"]') or
-                       last.query_selector('[class*="blink"]') or
-                       last.query_selector('[class*="loading"]') or
-                       last.query_selector('[class*="thinking"]'))
-            if not loading:
-                text = last.inner_text().strip()
-                if text and len(text) > 1:
-                    page.wait_for_timeout(800)
-                    answer = text
-                    break
-        page.wait_for_timeout(1000)
-
-    if not answer:
-        # 最后尝试：直接取页面中最后一个可见的回复内容
+    # 发送 + 校验（最多重试 2 次，用题目片段做锚点）
+    prefix = prompt.split('\n')[0][:10]
+    sent = False
+    for attempt in range(3):
+        if attempt > 0:
+            print(f'[{time.time()-t0:.1f}s] 发送检查未通过，重试 {attempt}', file=sys.stderr, flush=True)
+        _send()
+        page.wait_for_timeout(1500)
         try:
-            answer = page.evaluate('''() => {
-                const msgs = document.querySelectorAll('[class*="ds-assistant"], [class*="ds-markdown"], [class*="message-content"]');
-                for (let i = msgs.length - 1; i >= 0; i--) {
-                    const t = msgs[i].innerText.trim();
-                    if (t.length > 1) return t;
-                }
-                return '';
-            }''')
+            sent = page.evaluate('(p) => document.body.innerText.includes(p)', prefix)
         except Exception:
-            pass
+            sent = False
+        if sent:
+            break
+
+    print(f'[{time.time()-t0:.1f}s] 已发送 (校验{"通过" if sent else "未通过"})', file=sys.stderr, flush=True)
+
+    # 记录页面文本长度，据此判断 AI 是否仍在生成（文本在变长则继续等）
+    def _text_len():
+        try:
+            return len(page.evaluate('() => document.body.innerText'))
+        except Exception:
+            return None
+
+    last_len = -1
+    stable = 0
+    answer = None
+    for _ in range(90):
+        page.wait_for_timeout(1000)
+        cur_len = _text_len()
+        if cur_len is None:
+            continue
+        if cur_len != last_len:
+            last_len = cur_len
+            stable = 0
+        else:
+            stable += 1
+        # 整页文本连续 5 秒不再变长，认为回复完成
+        if stable >= 5:
+            # 从页面文本中提取"单独的纯字母答案行"（如 A / ACD）
+            try:
+                answer = page.evaluate('''() => {
+                    const lines = document.body.innerText.split('\\n').map(l => l.trim()).filter(l => l.length > 0);
+                    const candidates = [];
+                    for (const line of lines) {
+                        if (/^[A-H]{1,8}$/.test(line)) {
+                            candidates.push(line.toUpperCase());
+                        }
+                    }
+                    return candidates.length ? candidates[candidates.length - 1] : null;
+                }''')
+            except Exception:
+                answer = None
+            if answer:
+                break
 
     if not answer:
         raise TimeoutError('DeepSeek 回复超时')
 
-    print(f'[{time.time()-t0:.1f}s] 成功', file=sys.stderr, flush=True)
+    print(f'[{time.time()-t0:.1f}s] 成功 (答案字母={answer})', file=sys.stderr, flush=True)
     return answer
 
 
