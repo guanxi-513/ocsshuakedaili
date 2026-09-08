@@ -2,10 +2,10 @@
   {
     "contentType": "json",
     "handler": "return (res)=> [undefined, res[1]]",
-    "homepage": "http://localhost:8080",
+    "homepage": "http://10.91.29.234:8080",
     "method": "get",
     "name": "AI 自动答题",
     "type": "GM_xmlhttpRequest",
-    "url": "http://localhost:8080/search?title=${title}&type=${type}&options=${options}"
+    "url": "http://10.91.29.234:8080/search?title=${title}&type=${type}&options=${options}"
   }
 ]
