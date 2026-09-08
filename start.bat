@@ -187,6 +187,9 @@ echo     Step 3: Close the browser after login, then press any key here
 pause
 echo     [OK] Login status saved
 echo [OK] DeepSeek login done >>"%LOG_FILE%"
+echo     [INFO] Closing Edge background processes to release profile lock...
+taskkill /f /im msedge.exe >nul 2>&1
+echo [OK] Edge processes closed >>"%LOG_FILE%"
 
 :DEEPSEEK_START
 echo.
@@ -271,8 +274,14 @@ echo     Step 3: Close the browser after login, then press any key here
 pause
 echo     [OK] Login status saved
 echo [OK] Doubao login done >>"%LOG_FILE%"
+echo     [INFO] Closing Edge background processes to release profile lock...
+taskkill /f /im msedge.exe >nul 2>&1
+echo [OK] Edge processes closed >>"%LOG_FILE%"
 
 :DOUBAO_START
+echo.
+echo     [INFO] Releasing any Edge profile locks...
+taskkill /f /im msedge.exe >nul 2>&1
 echo.
 echo ============================================
 echo  Starting Doubao backend...
