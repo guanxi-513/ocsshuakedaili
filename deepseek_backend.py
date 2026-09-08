@@ -44,9 +44,30 @@ def _worker():
                 if prompt is None:
                     break
                 try:
+                    # 检查页面是否还活着
+                    try:
+                        page.title()
+                    except Exception:
+                        print("[worker] 页面已关闭，重新打开...", file=sys.stderr, flush=True)
+                        page = context.pages[0] if context.pages else context.new_page()
+                        page.goto('https://chat.deepseek.com', timeout=30000, wait_until='domcontentloaded')
+                        page.wait_for_timeout(2000)
                     answer = _do_ask(page, prompt)
                     _RESPONSE_QUEUE.put(answer)
                 except Exception as e:
+                    print(f"[worker] 请求失败: {e}", file=sys.stderr, flush=True)
+                    # 如果是页面关闭错误，尝试重新初始化
+                    try:
+                        page.close()
+                    except Exception:
+                        pass
+                    try:
+                        page = context.new_page()
+                        page.goto('https://chat.deepseek.com', timeout=30000, wait_until='domcontentloaded')
+                        page.wait_for_timeout(2000)
+                        print("[worker] 页面已恢复", file=sys.stderr, flush=True)
+                    except Exception as e2:
+                        print(f"[worker] 恢复失败: {e2}", file=sys.stderr, flush=True)
                     _RESPONSE_QUEUE.put(e)
 
             context.close()
