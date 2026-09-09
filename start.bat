@@ -21,38 +21,24 @@ echo [1/4] Python Path Setup...
 echo [STEP 1] Detecting Python... >>"%LOG_FILE%"
 set PYTHON=
 
-REM Auto-detect common Python paths
+REM Auto-detect common Python paths (single-line if, no brackets, most robust)
 echo     Checking common paths...
 echo [STEP 1] Auto detect... >>"%LOG_FILE%"
-if exist "C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe" (
-    set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe
-    echo     [OK] Python found (Python313)
-    echo [OK] Auto: Python313 >>"%LOG_FILE%"
-    goto :PY_OK
-)
-if exist "C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe" (
-    set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe
-    echo     [OK] Python found (Python312)
-    echo [OK] Auto: Python312 >>"%LOG_FILE%"
-    goto :PY_OK
-)
-if exist "C:\Users\HP\AppData\Local\Doubao\User Data\sandbox_runtime\bases\9f6d27f23933fb44a3a1c728c88a5ce4\python\python.exe" (
-    set PYTHON=C:\Users\HP\AppData\Local\Doubao\User Data\sandbox_runtime\bases\9f6d27f23933fb44a3a1c728c88a5ce4\python\python.exe
-    echo     [OK] Python found (Doubao sandbox)
-    echo [OK] Auto: Doubao sandbox >>"%LOG_FILE%"
-    goto :PY_OK
-)
-if exist "C:\Python313\python.exe" (
-    set PYTHON=C:\Python313\python.exe
-    echo     [OK] Python found (C:\Python313)
-    echo [OK] Auto: C:\Python313 >>"%LOG_FILE%"
-    goto :PY_OK
-)
-if exist "C:\Python312\python.exe" (
-    set PYTHON=C:\Python312\python.exe
-    echo     [OK] Python found (C:\Python312)
-    echo [OK] Auto: C:\Python312 >>"%LOG_FILE%"
-    goto :PY_OK
+
+if exist "C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe" set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python313\python.exe
+if exist "C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe" set PYTHON=C:\Users\HP\AppData\Local\Programs\Python\Python312\python.exe
+if exist "C:\Python313\python.exe" set PYTHON=C:\Python313\python.exe
+if exist "C:\Python312\python.exe" set PYTHON=C:\Python312\python.exe
+
+REM Dynamic check under current user's LOCALAPPDATA (works on any machine)
+if exist "%LOCALAPPDATA%\Programs\Python\Python313\python.exe" set PYTHON=%LOCALAPPDATA%\Programs\Python\Python313\python.exe
+if exist "%LOCALAPPDATA%\Programs\Python\Python312\python.exe" set PYTHON=%LOCALAPPDATA%\Programs\Python\Python312\python.exe
+if exist "%LOCALAPPDATA%\Programs\Python\Python311\python.exe" set PYTHON=%LOCALAPPDATA%\Programs\Python\Python311\python.exe
+
+if not "!PYTHON!"=="" (
+    echo     [OK] Python found: !PYTHON!
+    echo [OK] Auto detect: !PYTHON! >>"%LOG_FILE%"
+    goto :PY_VALIDATE
 )
 
 REM Auto-detect failed, ask for manual input
@@ -71,14 +57,13 @@ echo [INPUT] PYTHON_PATH = "!PYTHON_PATH!" >>"%LOG_FILE%"
 if "!PYTHON_PATH!"=="" goto :EXIT_NO_PATH
 if "!PYTHON_PATH!"=="0" goto :EXIT_NO_PATH
 
-REM If input is a directory (no .exe), try adding python.exe
 echo !PYTHON_PATH! | findstr /i "\.exe$" >nul
 if !errorlevel! neq 0 (
     if exist "!PYTHON_PATH!\python.exe" (
         set PYTHON=!PYTHON_PATH!\python.exe
         echo     [OK] Auto-completed python.exe
         echo [OK] Auto-completed: !PYTHON! >>"%LOG_FILE%"
-        goto :PY_OK
+        goto :PY_VALIDATE
     )
 )
 
@@ -86,7 +71,7 @@ if exist "!PYTHON_PATH!" (
     set PYTHON=!PYTHON_PATH!
     echo     [OK] Valid path
     echo [OK] Manual input: !PYTHON! >>"%LOG_FILE%"
-    goto :PY_OK
+    goto :PY_VALIDATE
 )
 
 echo     [X] Invalid path, please try again
@@ -100,8 +85,12 @@ echo [X] Exiting
 pause
 exit /b 1
 
-:PY_OK
+:PY_VALIDATE
+REM Make sure PYTHON is actually set and the file exists
+if "!PYTHON!"=="" goto :ASK_PYTHON
+if not exist "!PYTHON!" goto :ASK_PYTHON
 echo [STEP 1] Python OK: !PYTHON! >>"%LOG_FILE%"
+echo     [OK] Python ready
 echo.
 
 REM ====== 2. Check Dependencies ======
@@ -149,6 +138,15 @@ echo     3 - Doubao Web (needs login, free)
 echo.
 set /p BACKEND="Enter number (1/2/3): "
 echo [INPUT] BACKEND = "!BACKEND!" >>"%LOG_FILE%"
+
+REM ---- Ask port (multi-instance support) ----
+set PORT=8080
+echo.
+set /p PORT_INPUT="Enter service port (default 8080, e.g. 8080/8081/8082): "
+if not "%PORT_INPUT%"=="" (
+    set PORT=%PORT_INPUT%
+)
+echo [INPUT] PORT = "!PORT!" >>"%LOG_FILE%"
 
 if "%BACKEND%"=="1" goto :BACKEND_DEEPSEEK
 if "%BACKEND%"=="2" goto :BACKEND_OLLAMA
@@ -198,7 +196,7 @@ echo  Starting DeepSeek backend...
 echo ============================================
 echo [START] app.py (DeepSeek) >>"%LOG_FILE%"
 echo.
-"!PYTHON!" "%~dp0app.py"
+"!PYTHON!" "%~dp0app.py" --port !PORT!
 echo [EXIT] app.py exited >>"%LOG_FILE%"
 pause
 exit /b 0
@@ -242,7 +240,7 @@ echo  Starting Ollama backend...
 echo ============================================
 echo [START] app.py (Ollama) >>"%LOG_FILE%"
 echo.
-"!PYTHON!" "%~dp0app.py" --mode ollama
+"!PYTHON!" "%~dp0app.py" --mode ollama --port !PORT!
 echo [EXIT] app.py exited >>"%LOG_FILE%"
 pause
 exit /b 0
@@ -288,7 +286,7 @@ echo  Starting Doubao backend...
 echo ============================================
 echo [START] app.py (Doubao) >>"%LOG_FILE%"
 echo.
-"!PYTHON!" "%~dp0app.py" --mode doubao
+"!PYTHON!" "%~dp0app.py" --mode doubao --port !PORT!
 echo [EXIT] app.py exited >>"%LOG_FILE%"
 pause
 exit /b 0
