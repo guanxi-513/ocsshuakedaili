@@ -14,6 +14,7 @@ import re
 import urllib.parse
 import os
 import uuid
+import socket
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
 from datetime import datetime
@@ -59,13 +60,21 @@ BACKEND_MODE = "deepseek"                     # 默认使用 DeepSeek 后端
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_TAGS_URL = f"{OLLAMA_BASE_URL}/api/tags"
 
-# 支持命令行参数：--mode ollama / --mode doubao
+# 支持命令行参数：--mode ollama / --mode doubao / --port 8081
 if "--mode" in sys.argv:
     idx = sys.argv.index("--mode")
     if idx + 1 < len(sys.argv):
         mode = sys.argv[idx + 1].lower()
         if mode in ("ollama", "deepseek", "doubao"):
             BACKEND_MODE = mode
+
+if "--port" in sys.argv:
+    idx = sys.argv.index("--port")
+    if idx + 1 < len(sys.argv):
+        try:
+            PORT = int(sys.argv[idx + 1])
+        except ValueError:
+            pass
 
 # 根据模式按需导入
 if BACKEND_MODE == "deepseek":
@@ -533,6 +542,55 @@ div:nth-child(odd) {{ background:#252526; }}
         log(f"  [{self.command}] {args[0]}")
 
 
+def _local_ips():
+    """获取本机所有 IPv4 地址列表"""
+    ips = []
+    try:
+        hostname = socket.gethostname()
+        for info in socket.getaddrinfo(hostname, None, socket.AF_INET):
+            ip = info[4][0]
+            if ip not in ips and not ip.startswith("127."):
+                ips.append(ip)
+    except Exception:
+        pass
+    if not ips:
+        ips.append("localhost")
+    return ips
+
+
+def generate_ocs_config():
+    """生成 OCS 题库配置文件（自动探测本机IP + 当前端口）"""
+    configs = []
+    for ip in _local_ips():
+        base = f"http://{ip}:{PORT}"
+        configs.append({
+            "contentType": "json",
+            "handler": "return (res)=> [undefined, res[1]]",
+            "homepage": base,
+            "method": "get",
+            "name": f"AI 自动答题 ({ip}:{PORT})",
+            "type": "GM_xmlhttpRequest",
+            "url": f"{base}/search?title=${{title}}&type=${{type}}&options=${{options}}",
+        })
+    # 追加 localhost 项（本机使用场景）
+    configs.append({
+        "contentType": "json",
+        "handler": "return (res)=> [undefined, res[1]]",
+        "homepage": f"http://localhost:{PORT}",
+        "method": "get",
+        "name": f"AI 自动答题 (localhost:{PORT})",
+        "type": "GM_xmlhttpRequest",
+        "url": f"http://localhost:{PORT}/search?title=${{title}}&type=${{type}}&options=${{options}}",
+    })
+    try:
+        path = os.path.join(BACKEND_DIR, "ocs_config.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(configs, f, ensure_ascii=False, indent=2)
+        log(f"  [配置文件] 已生成: {path}")
+    except Exception as e:
+        log(f"  [配置文件] 生成失败: {e}")
+
+
 def run_server():
     """启动 HTTP 服务"""
     server = ThreadingHTTPServer(("0.0.0.0", PORT), AnswerHandler)
@@ -550,6 +608,9 @@ def run_server():
     log(f"  Handler: return (res)=> [undefined, res[1]]")
     log("=" * 50)
     log("等待请求...")
+
+    # 自动生成 OCS 配置文件
+    generate_ocs_config()
 
     try:
         server.serve_forever()
