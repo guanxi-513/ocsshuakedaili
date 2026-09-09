@@ -1,0 +1,47 @@
+[
+  {
+    "contentType": "json",
+    "handler": "return (res)=> [undefined, res[1]]",
+    "homepage": "http://10.91.29.234:8080",
+    "method": "get",
+    "name": "AI 答题 - 端口8080",
+    "type": "GM_xmlhttpRequest",
+    "url": "http://10.91.29.234:8080/search?title=${title}&type=${type}&options=${options}"
+  },
+  {
+    "contentType": "json",
+    "handler": "return (res)=> [undefined, res[1]]",
+    "homepage": "http://10.91.29.234:8081",
+    "method": "get",
+    "name": "AI 答题 - 端口8081",
+    "type": "GM_xmlhttpRequest",
+    "url": "http://10.91.29.234:8081/search?title=${title}&type=${type}&options=${options}"
+  },
+  {
+    "contentType": "json",
+    "handler": "return (res)=> [undefined, res[1]]",
+    "homepage": "http://10.91.29.234:8082",
+    "method": "get",
+    "name": "AI 答题 - 端口8082",
+    "type": "GM_xmlhttpRequest",
+    "url": "http://10.91.29.234:8082/search?title=${title}&type=${type}&options=${options}"
+  },
+  {
+    "contentType": "json",
+    "handler": "return (res)=> [undefined, res[1]]",
+    "homepage": "http://10.91.29.234:8083",
+    "method": "get",
+    "name": "AI 答题 - 端口8083",
+    "type": "GM_xmlhttpRequest",
+    "url": "http://10.91.29.234:8083/search?title=${title}&type=${type}&options=${options}"
+  },
+  {
+    "contentType": "json",
+    "handler": "return (res)=> [undefined, res[1]]",
+    "homepage": "http://10.91.29.234:8084",
+    "method": "get",
+    "name": "AI 答题 - 端口8084",
+    "type": "GM_xmlhttpRequest",
+    "url": "http://10.91.29.234:8084/search?title=${title}&type=${type}&options=${options}"
+  }
+]
